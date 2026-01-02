@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>🔢 ChuteChute com Leaderboard Global</title>
+  <style>
+    body{font-family:system-ui;padding:20px;max-width:900px;margin:0 auto}
+    .card{border:1px solid #ddd;padding:12px;border-radius:8px;margin-bottom:12px}
+    .muted{color:#666;font-size:.9rem}
+    .record{display:flex;justify-content:space-between;padding:8px;border-bottom:1px solid #eee}
+  </style>
+</head>
+<body>
+  <h1>🔢 ChuteChute com Leaderboard Global</h1>
+
+  <div class="card">
+    <label>Nome <input id="playerName" type="text" /></label>
+    <label>Dificuldade
+      <select id="difficulty">
+        <option value="easy">Fácil (1–50)</option>
+        <option value="medium" selected>Médio (1–100)</option>
+        <option value="hard">Difícil (1–200)</option>
+      </select>
+    </label>
+    <div>
+      <input id="guess" type="number" placeholder="Seu palpite" />
+      <button id="btnGuess">Verificar</button>
+      <button id="btnRestart" class="hidden">Jogar Novamente</button>
+    </div>
+    <div id="message" class="muted"></div>
+  </div>
+
+  <div class="card">
+    <h3>🏅 Top 10 Global</h3>
+    <div id="recordsList" class="muted">Carregando...</div>
+  </div>
+
+  <script>
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwbtOhk4-2QISmZ2L7_b0q5jBAAaDXO8AsZTows7VeQeIzjnUxlu2RGbAE6-Uo3GRnh/exec';
+    const DIFFICULTIES = { easy:50, medium:100, hard:200 };
+    let difficulty = 'medium', max = DIFFICULTIES[difficulty], secret = Math.floor(Math.random()*max)+1, attempts = 0, finished = false;
+
+    const playerNameEl = document.getElementById('playerName');
+    const difficultyEl = document.getElementById('difficulty');
+    const guessEl = document.getElementById('guess');
+    const btnGuess = document.getElementById('btnGuess');
+    const btnRestart = document.getElementById('btnRestart');
+    const messageEl = document.getElementById('message');
+    const recordsList = document.getElementById('recordsList');
+
+    async function fetchRecords() {
+      try {
+        const res = await fetch(WEB_APP_URL);
+        const data = await res.json();
+        renderTop10(data);
+      } catch (err) {
+        recordsList.textContent = 'Erro ao carregar leaderboard.';
+      }
+    }
+
+    function renderTop10(arr) {
+      if (!Array.isArray(arr) || arr.length === 0) { recordsList.textContent = 'Nenhum recorde.'; return; }
+      const sorted = arr.slice().sort((a,b)=> a.tries - b.tries || new Date(b.date) - new Date(a.date)).slice(0,10);
+      recordsList.innerHTML = '';
+      sorted.forEach((r,i)=>{
+        const div = document.createElement('div');
+        div.className = 'record';
+        div.innerHTML = `<div><strong>#${i+1}</strong> ${r.name||'—'} <span class="muted">(${r.difficulty})</span></div><div class="muted">${r.tries} • ${new Date(r.date).toLocaleString()}</div>`;
+        recordsList.appendChild(div);
+      });
+    }
+
+    async function pushRecord(record) {
+      try {
+        await fetch(WEB_APP_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(record)
+        });
+        fetchRecords();
+      } catch (err) {
+        console.warn('Erro ao enviar record', err);
+      }
+    }
+
+    function startGame() {
+      difficulty = difficultyEl.value;
+      max = DIFFICULTIES[difficulty];
+      secret = Math.floor(Math.random()*max)+1;
+      attempts = 0;
+      finished = false;
+      messageEl.textContent = `Escolha um número entre 1 e ${max}`;
+      guessEl.value = '';
+      btnRestart.classList.add('hidden');
+      guessEl.focus(); guessEl.select();
+    }
+
+    btnGuess.addEventListener('click', async () => {
+      if (finished) return;
+      const val = parseInt(guessEl.value, 10);
+      if (!Number.isFinite(val) || val < 1 || val > max) { messageEl.textContent = `Insira 1–${max}`; return; }
+      attempts++;
+      if (val === secret) {
+        messageEl.textContent = `🎉 Acertou em ${attempts} tentativa(s)! Enviando...`;
+        finished = true;
+        const rec = { name: (playerNameEl.value||'').trim() || null, tries: attempts, difficulty, max, date: new Date().toISOString() };
+        await pushRecord(rec);
+        btnRestart.classList.remove('hidden');
+      } else {
+        messageEl.textContent = val < secret ? '🔼 Muito baixo!' : '🔽 Muito alto!';
+      }
+      guessEl.focus(); guessEl.select();
+    });
+
+    btnRestart.addEventListener('click', startGame);
+    difficultyEl.addEventListener('change', startGame);
+
+    // inicial
+    startGame();
+    fetchRecords();
+    setInterval(fetchRecords, 8000);
+  </script>
+</body>
+</html>
