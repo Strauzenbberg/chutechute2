@@ -3,68 +3,35 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>?? Chute Chute — Ranking Global Online</title>
+  <title>🎯 Chute Chute — Ranking Global</title>
   
-  <meta name="description" content="Desafio global de adivinhação. Entre para o Top 10 mundial!" />
-  <meta property="og:title" content="Chute Chute: Ranking em Tempo Real" />
-  <meta property="og:type" content="website" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
 
   <style>
-    .light {
-      --bg: #ffffff; --fg: #222; --primary: #0B3B60;
-      --button-bg: var(--primary); --button-color: #fff;
-      --muted: #555; --card: #f7f7f7; --border: #e6eef5;
-    }
-    .dark {
-      --bg: #0b1220; --fg: #e6eef9; --primary: #D4AF37;
-      --button-bg: var(--primary); --button-color: #000;
-      --muted: #9aa8bf; --card: #071022; --border: #122033;
-    }
-
-    body {
-      margin: 0; font-family: Inter, system-ui, sans-serif;
-      background: var(--bg); color: var(--fg); transition: 0.3s;
-    }
-
-    main {
-      min-height: 100vh; display: flex; flex-direction: column;
-      align-items: center; padding: 2rem; box-sizing: border-box;
-      max-width: 700px; margin: 0 auto;
-    }
-
+    .light { --bg: #ffffff; --fg: #222; --primary: #0B3B60; --button-bg: var(--primary); --button-color: #fff; --muted: #555; --card: #f7f7f7; --border: #e6eef5; }
+    .dark { --bg: #0b1220; --fg: #e6eef9; --primary: #D4AF37; --button-bg: var(--primary); --button-color: #000; --muted: #9aa8bf; --card: #071022; --border: #122033; }
+    body { margin: 0; font-family: Inter, sans-serif; background: var(--bg); color: var(--fg); transition: 0.3s; }
+    main { min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 2rem; max-width: 700px; margin: 0 auto; }
     .topbar { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-    .card {
-      width: 100%; background: var(--card); border: 1px solid var(--border);
-      border-radius: 12px; padding: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-    }
-
+    .card { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
     .row { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; }
-    input, select, button { 
-      font-size: 1rem; padding: .6rem; border-radius: 8px; 
-      border: 1px solid var(--border); background: transparent; color: var(--fg);
-    }
-
-    button { 
-      background: var(--button-bg); color: var(--button-color); 
-      border: none; cursor: pointer; font-weight: bold; transition: 0.2s;
-    }
-    button:hover { filter: brightness(1.1); transform: translateY(-1px); }
-
+    input, select, button { font-size: 1rem; padding: .6rem; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--fg); }
+    button { background: var(--button-bg); color: var(--button-color); border: none; cursor: pointer; font-weight: bold; }
     .mensagem { margin-top: 1rem; font-size: 1.1rem; min-height: 1.4em; text-align: center; font-weight: bold; }
     .muted { color: var(--muted); font-size: 0.9rem; }
     .hidden { display: none !important; }
-
-    /* Estilo do Ranking Global */
     .ranking-section { margin-top: 2rem; width: 100%; border-top: 2px solid var(--border); padding-top: 1rem; }
     .ranking-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
     .ranking-table th, .ranking-table td { text-align: left; padding: 10px; border-bottom: 1px solid var(--border); }
-    .ranking-table th { color: var(--primary); font-size: 0.8rem; text-transform: uppercase; }
-    
-    .status-online { color: #2ecc71; font-size: 0.75rem; display: flex; align-items: center; gap: 5px; margin-bottom: 5px; }
+    .status-online { color: #2ecc71; font-size: 0.75rem; display: flex; align-items: center; gap: 5px; }
     .dot { width: 7px; height: 7px; background: #2ecc71; border-radius: 50%; }
+    #btnZap { background: #25D366; color: white; width: 100%; margin-top: 10px; }
   </style>
 </head>
 <body class="light">
+  <audio id="beep" src="https://www.soundjay.com/button/button-16.wav" preload="auto"></audio>
+  <audio id="vitoriaSom" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" preload="auto"></audio>
+
   <main>
     <div class="topbar">
       <div class="row">
@@ -75,11 +42,11 @@
           <option value="hard">Difícil (1–200)</option>
         </select>
       </div>
-      <button id="btnTheme">?? Tema</button>
+      <button id="btnTheme">🌓 Tema</button>
     </div>
 
-    <h1>?? Chute Chute</h1>
-    <p id="rangeInfo" class="muted">Escolha um número entre 1 e 100</p>
+    <h1>🎯 Chute Chute</h1>
+    <p id="rangeInfo" class="muted"></p>
 
     <div class="card">
       <div id="gameArea" class="row">
@@ -88,8 +55,10 @@
         <button id="btnVerificar">CHUTAR</button>
       </div>
 
-      <div id="againArea" class="row hidden">
-        <button id="btnReiniciar">Jogar Novamente</button>
+      <div id="againArea" class="hidden">
+        <div id="msgVitoria" class="mensagem"></div>
+        <button id="btnReiniciar" style="width: 100%;">Jogar Novamente</button>
+        <button id="btnZap">📱 Compartilhar com amigos</button>
       </div>
 
       <div id="mensagem" class="mensagem"></div>
@@ -98,16 +67,9 @@
         <div class="status-online"><span class="dot"></span> RANKING GLOBAL AO VIVO</div>
         <table class="ranking-table">
           <thead>
-            <tr>
-              <th>Pos.</th>
-              <th>Jogador</th>
-              <th>Chutes</th>
-              <th>Nível</th>
-            </tr>
+            <tr><th>Pos.</th><th>Jogador</th><th>Chutes</th><th>Nível</th></tr>
           </thead>
-          <tbody id="rankingBody">
-            <tr><td colspan="4" class="muted">Conectando ao servidor...</td></tr>
-          </tbody>
+          <tbody id="rankingBody"></tbody>
         </table>
       </div>
     </div>
@@ -115,14 +77,9 @@
 
   <script>
     (function () {
-      // IMPORTANTE: Substitua pela URL que o Render/Railway te fornecer
-      const API_URL ="/api/ranking";
-
+      const API_URL = "/api/ranking";
       const DIFFICULTIES = { easy: 50, medium: 100, hard: 200 };
-      let difficulty = 'medium';
-      let maxNumber = 100;
-      let numeroSecreto;
-      let tentativas = 0;
+      let difficulty = 'medium', maxNumber = 100, numeroSecreto, tentativas = 0;
 
       const el = {
         diff: document.getElementById('difficulty'),
@@ -135,48 +92,31 @@
         areaGame: document.getElementById('gameArea'),
         areaAgain: document.getElementById('againArea'),
         range: document.getElementById('rangeInfo'),
-        btnTheme: document.getElementById('btnTheme')
+        btnTheme: document.getElementById('btnTheme'),
+        btnZap: document.getElementById('btnZap'),
+        beep: document.getElementById('beep'),
+        win: document.getElementById('vitoriaSom') // Referência ao som de vitória
       };
 
-      // 1. BUSCAR RANKING DO SERVIDOR NODE
       async function fetchGlobalRanking() {
         try {
           const res = await fetch(API_URL);
-          if (!res.ok) throw new Error();
           const data = await res.json();
           renderTable(data);
-        } catch (e) {
-          el.ranking.innerHTML = '<tr><td colspan="4" class="muted">Servidor offline. Recorde local apenas.</td></tr>';
-        }
+        } catch (e) { el.ranking.innerHTML = '<tr><td colspan="4">Erro ao carregar ranking.</td></tr>'; }
       }
 
-      // 2. ENVIAR RECORDE PARA O SERVIDOR NODE
       async function saveRecord(nome, chutes, nivel) {
-        try {
-          await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: nome || 'Anônimo', tries: chutes, difficulty: nivel })
-          });
-          fetchGlobalRanking();
-        } catch (e) {
-          console.error("Falha ao sincronizar recorde global.");
-        }
+        await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: nome || 'Anônimo', tries: chutes, difficulty: nivel })
+        });
+        fetchGlobalRanking();
       }
 
       function renderTable(data) {
-        if (data.length === 0) {
-          el.ranking.innerHTML = '<tr><td colspan="4" class="muted">Seja o primeiro a pontuar!</td></tr>';
-          return;
-        }
-        el.ranking.innerHTML = data.map((r, i) => `
-          <tr>
-            <td><strong>${i+1}º</strong></td>
-            <td>${r.name}</td>
-            <td>${r.tries}</td>
-            <td>${r.difficulty}</td>
-          </tr>
-        `).join('');
+        el.ranking.innerHTML = data.map((r, i) => `<tr><td>${i+1}º</td><td>${r.name}</td><td>${r.tries}</td><td>${r.difficulty}</td></tr>`).join('');
       }
 
       function startGame() {
@@ -188,28 +128,38 @@
         el.areaGame.classList.remove('hidden');
         el.areaAgain.classList.add('hidden');
         el.range.textContent = `Escolha um número entre 1 e ${maxNumber}`;
+        el.palpite.focus();
         fetchGlobalRanking();
       }
 
+      el.palpite.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') el.btnVerificar.click();
+      });
+
       el.btnVerificar.onclick = () => {
+        el.beep.play(); 
         const p = parseInt(el.palpite.value);
         if (isNaN(p) || p < 1 || p > maxNumber) return;
 
         tentativas++;
         if (p === numeroSecreto) {
-          el.msg.innerHTML = `?? ACERTOU EM ${tentativas} TENTATIVAS!`;
+          el.win.play(); // Toca o som de vitória (Sininho)
+          document.getElementById('msgVitoria').innerHTML = `🏆 ACERTOU EM ${tentativas} CHUTES!`;
           el.areaGame.classList.add('hidden');
           el.areaAgain.classList.remove('hidden');
-          
-          // SALVAMENTO AUTOMÁTICO NO NODE.JS
           saveRecord(el.name.value, tentativas, difficulty);
         } else {
-          el.msg.textContent = p < numeroSecreto ? "?? Mais alto!" : "?? Mais baixo!";
+          el.msg.textContent = p < numeroSecreto ? "🔼 Mais alto!" : "🔽 Mais baixo!";
+          el.palpite.focus();
           el.palpite.select();
         }
       };
 
-      // Eventos Básicos
+      el.btnZap.onclick = () => {
+        const texto = encodeURIComponent(`🎯 Consegui acertar o número secreto com ${tentativas} chutes no Chute Chute! Duvido você bater meu recorde: ${window.location.href}`);
+        window.open(`https://wa.me/?text=${texto}`);
+      };
+
       el.diff.onchange = () => { difficulty = el.diff.value; startGame(); };
       el.btnAgain.onclick = startGame;
       el.btnTheme.onclick = () => {
@@ -217,7 +167,6 @@
         document.body.classList.toggle('light', !isDark);
       };
 
-      // Início
       startGame();
     })();
   </script>
