@@ -3,78 +3,43 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Adivinhe o Número — Top 10 Records</title>
+  <title>🎯 Chute Chute — Ranking Global Online</title>
   
-  <meta name="description" content="Desafie sua mente no Adivinhe o Número! Dispute o Top 10 e teste sua intuição agora." />
-  <link rel="icon" href="favicon.ico" type="image/x-icon">
-
-  <meta property="og:title" content="Adivinhe o Número - Recordes Online" />
-  <meta property="og:description" content="Consegue entrar no Top 10? Jogue agora e salve seu recorde!" />
-  <meta property="og:image" content="https://seusite.com.br/thumb-jogo.jpg" />
+  <meta name="description" content="Tente adivinhar o número e entre para o Ranking Global do Chute Chute!" />
+  <meta property="og:title" content="Chute Chute: Você está no Top 10?" />
   <meta property="og:type" content="website" />
 
   <style>
-    /* Themes */
+    /* Mantendo seus temas originais com pequenos ajustes de contraste */
     .light {
       --bg: #ffffff; --fg: #222; --primary: #0B3B60;
       --button-bg: var(--primary); --button-color: #fff;
       --muted: #555; --card: #f7f7f7; --border: #e6eef5;
+      --highlight: #ffd700;
     }
     .dark {
       --bg: #0b1220; --fg: #e6eef9; --primary: #D4AF37;
       --button-bg: var(--primary); --button-color: #000;
       --muted: #9aa8bf; --card: #071022; --border: #122033;
+      --highlight: #f0c420;
     }
 
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family: 'Inter', system-ui, sans-serif;
-      background:var(--bg);
-      color:var(--fg);
-      transition: background 0.3s ease;
-    }
-
-    main{
-      min-height:100vh;
-      display:flex;
-      flex-direction:column;
-      gap:1rem;
-      align-items:center;
-      padding:2rem;
-      box-sizing:border-box;
-      max-width:900px;
-      margin:0 auto;
-    }
-
-    .topbar{
-      width:100%;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:1rem;
-    }
-
-    h1{margin:.25rem 0 .5rem;font-size:1.6rem}
-    .card{
-      width:100%;
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:10px;
-      padding:1.5rem;
-      box-sizing:border-box;
-      box-shadow:0 6px 18px rgba(0,0,0,0.06);
-    }
-
-    .row{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap; margin-bottom: 10px;}
-    input, select, button { padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border); font-size: 1rem; }
-    button { cursor: pointer; background: var(--button-bg); color: var(--button-color); border: none; font-weight: bold;}
+    body { margin:0; font-family:Inter, sans-serif; background:var(--bg); color:var(--fg); transition: 0.3s; }
+    main { min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:2rem; box-sizing:border-box; max-width:900px; margin:0 auto; }
+    .topbar { width:100%; display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem; }
+    .card { width:100%; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:1.5rem; box-shadow:0 6px 18px rgba(0,0,0,0.1); }
+    .row { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; margin-bottom: 1rem; }
+    input, select, button { padding:.6rem; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--fg); font-size: 1rem; }
+    button { background:var(--button-bg); color:var(--button-color); border:none; cursor:pointer; font-weight:bold; }
+    .hidden { display:none!important; }
     
-    .hidden{display:none!important}
-    .record-item{
-      display:flex; justify-content:space-between; padding:.5rem; 
-      border-bottom: 1px solid var(--border); font-size: 0.9rem;
-    }
+    /* Estilo da Tabela de Recordes Global */
+    .global-ranking { margin-top: 2rem; width: 100%; }
+    .ranking-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    .ranking-table th, .ranking-table td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); }
+    .ranking-table tr:first-child td { color: var(--highlight); font-weight: bold; }
+    .status-online { font-size: 0.8rem; color: #2ecc71; margin-bottom: 5px; display: flex; align-items: center; gap: 5px; }
+    .status-dot { width: 8px; height: 8px; background: #2ecc71; border-radius: 50%; }
   </style>
 </head>
 <body class="light">
@@ -88,47 +53,62 @@
           <option value="hard">Difícil (1–200)</option>
         </select>
       </div>
-      <button id="btnTheme">Alternar Tema</button>
+      <button id="btnTheme">🌓 Trocar Tema</button>
     </div>
 
-    <h1>🎯 Adivinhe o Número</h1>
+    <h1>🎯 Chute Chute</h1>
     <p id="rangeInfo" class="muted">Escolha um número entre 1 e 100</p>
 
     <div class="card">
       <div id="gameArea" class="row">
-        <input id="playerName" type="text" placeholder="Seu nome" />
-        <input id="palpite" type="number" placeholder="Seu palpite" />
-        <button id="btnVerificar">Verificar</button>
+        <input id="playerName" type="text" placeholder="Seu apelido" maxlength="15" />
+        <input id="palpite" type="number" placeholder="Seu chute" />
+        <button id="btnVerificar">Chutar!</button>
       </div>
 
       <div id="againArea" class="row hidden">
         <button id="btnReiniciar">Jogar Novamente</button>
-        <button id="btnResetHistory" style="background:#cc0000; color:#fff">Limpar Recordes</button>
+        <button id="btnShare" style="background:#25D366; color:white">Compartilhar Pontuação</button>
       </div>
 
-      <div id="mensagem" style="font-weight:bold; margin: 10px 0;"></div>
+      <div id="mensagem" class="mensagem"></div>
 
-      <div id="recordsArea" style="margin-top:20px;">
-        <h3>🏆 Top 10 Recordes</h3>
-        <div id="recordsList"></div>
+      <div class="global-ranking">
+        <div class="status-online"><span class="status-dot"></span> Ranking Global Online</div>
+        <table class="ranking-table">
+          <thead>
+            <tr>
+              <th>Pos.</th>
+              <th>Jogador</th>
+              <th>Tentativas</th>
+              <th>Nível</th>
+            </tr>
+          </thead>
+          <tbody id="globalRecordsList">
+            <tr><td colspan="4" class="muted">Carregando recordes globais...</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </main>
 
   <script>
     (function () {
+      // CONFIGURAÇÃO DA PLANILHA (Aqui você colaria sua URL do SheetDB depois)
+      const API_URL = "SUA_URL_DA_API_AQUI"; 
+
       const DIFFICULTIES = { easy: 50, medium: 100, hard: 200 };
       let difficulty = 'medium';
       let maxNumber = 100;
       let numeroSecreto;
       let tentativas = 0;
 
-      // Elementos
+      // Elementos DOM
       const el = {
         diff: document.getElementById('difficulty'),
         palpite: document.getElementById('palpite'),
         msg: document.getElementById('mensagem'),
-        list: document.getElementById('recordsList'),
+        list: document.getElementById('globalRecordsList'),
         btnVerificar: document.getElementById('btnVerificar'),
         btnAgain: document.getElementById('btnReiniciar'),
         name: document.getElementById('playerName'),
@@ -138,64 +118,85 @@
         btnTheme: document.getElementById('btnTheme')
       };
 
-      function init() {
+      function startGame() {
+        maxNumber = DIFFICULTIES[difficulty];
         numeroSecreto = Math.floor(Math.random() * maxNumber) + 1;
         tentativas = 0;
         el.msg.textContent = "";
         el.palpite.value = "";
         el.areaGame.classList.remove('hidden');
         el.areaAgain.classList.add('hidden');
-        renderRecords();
+        fetchGlobalRecords(); // Atualiza o ranking toda vez que começa
       }
 
-      function saveRecord(name, tries) {
-        let records = JSON.parse(localStorage.getItem('guess_records') || '[]');
-        records.push({ name: name || 'Anônimo', tries, diff: difficulty, date: new Date().toLocaleDateString() });
-        records.sort((a, b) => a.tries - b.tries);
-        localStorage.setItem('guess_records', JSON.stringify(records.slice(0, 10)));
-        renderRecords();
+      // FUNÇÃO PARA ENVIAR PARA A PLANILHA (GLOBAL)
+      async function sendToGlobalRanking(name, tries, diff) {
+        if (!API_URL.includes("http")) return; // Só envia se configurar a API
+
+        const data = { name: name || 'Anônimo', tries, difficulty: diff, date: new Date().toISOString() };
+        
+        try {
+          await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          fetchGlobalRecords();
+        } catch (e) { console.error("Erro ao enviar recorde", e); }
       }
 
-      function renderRecords() {
-        let records = JSON.parse(localStorage.getItem('guess_records') || '[]');
-        el.list.innerHTML = records.map((r, i) => `
-          <div class="record-item">
-            <span>#${i+1} ${r.name} (${r.diff})</span>
-            <span>${r.tries} tentativas - ${r.date}</span>
-          </div>
-        `).join('');
+      // FUNÇÃO PARA BUSCAR DA PLANILHA (GLOBAL)
+      async function fetchGlobalRecords() {
+        if (!API_URL.includes("http")) {
+            el.list.innerHTML = '<tr><td colspan="4">Configure uma API no código para ativar o ranking global.</td></tr>';
+            return;
+        }
+
+        try {
+          const res = await fetch(API_URL);
+          const data = await res.json();
+          
+          // Ordenar por menos tentativas e pegar Top 10
+          const sorted = data.sort((a, b) => a.tries - b.tries).slice(0, 10);
+          
+          el.list.innerHTML = sorted.map((r, i) => `
+            <tr>
+              <td>${i+1}º</td>
+              <td>${r.name}</td>
+              <td>${r.tries}</td>
+              <td>${r.difficulty}</td>
+            </tr>
+          `).join('');
+        } catch (e) {
+          el.list.innerHTML = '<tr><td colspan="4">Não foi possível carregar o ranking.</td></tr>';
+        }
       }
 
       el.btnVerificar.onclick = () => {
         const p = parseInt(el.palpite.value);
-        if(isNaN(p)) return;
-        tentativas++;
+        if(isNaN(p) || p < 1 || p > maxNumber) return;
         
+        tentativas++;
         if(p === numeroSecreto) {
-          el.msg.textContent = `🎉 Parabéns! Você acertou em ${tentativas} tentativas!`;
-          saveRecord(el.name.value, tentativas);
+          el.msg.innerHTML = `🎉 <strong>ACERTOU!</strong> Foram ${tentativas} tentativas.`;
           el.areaGame.classList.add('hidden');
           el.areaAgain.classList.remove('hidden');
+          sendToGlobalRanking(el.name.value, tentativas, difficulty);
         } else {
           el.msg.textContent = p < numeroSecreto ? "🔼 Mais alto!" : "🔽 Mais baixo!";
         }
+        el.palpite.focus();
+        el.palpite.select();
       };
 
-      el.diff.onchange = () => {
-        difficulty = el.diff.value;
-        maxNumber = DIFFICULTIES[difficulty];
-        el.range.textContent = `Escolha um número entre 1 e ${maxNumber}`;
-        init();
-      };
-
-      el.btnAgain.onclick = init;
-      
+      el.diff.onchange = () => { difficulty = el.diff.value; startGame(); };
+      el.btnAgain.onclick = startGame;
       el.btnTheme.onclick = () => {
         const isDark = document.body.classList.toggle('dark');
         document.body.classList.toggle('light', !isDark);
       };
 
-      init();
+      startGame();
     })();
   </script>
 </body>
