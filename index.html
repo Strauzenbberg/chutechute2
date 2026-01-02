@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>🔢 ChuteChute — Leaderboard Global</title>
-  <meta name="description" content="Jogo de adivinhar número com leaderboard global via Google Apps Script." />
+  <meta name="description" content="Jogo de adivinhar número com leaderboard global via Google Apps Script (CORS-safe)." />
   <style>
     :root{--bg:#ffffff;--fg:#222;--accent:#0B3B60;--muted:#666;--card:#f7f7f7;--border:#e6eef5}
     body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--fg);padding:20px}
@@ -67,7 +67,7 @@
   </div>
 
   <script>
-    // URL do seu Apps Script publicado como Web App
+    // URL do seu Apps Script publicado como Web App (Who has access: Anyone)
     const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwbtOhk4-2QISmZ2L7_b0q5jBAAaDXO8AsZTows7VeQeIzjnUxlu2RGbAE6-Uo3GRnh/exec';
 
     // Jogo
@@ -89,30 +89,35 @@
     const netNoticeEl = document.getElementById('netNotice');
     const recordsListEl = document.getElementById('recordsList');
 
-    // Helpers de rede resilientes
-    async function safeFetchJSON(url, options = {}) {
+    // Helpers de rede (sem headers customizados; POST como text/plain para evitar preflight)
+    async function fetchJSONNoCorsIssues(url) {
       const finalUrl = new URL(url);
-      finalUrl.searchParams.set('_ts', String(Date.now())); // evita cache agressivo
-      const opts = {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' },
-        cache: 'no-store',
-        mode: 'cors',
-        ...options
-      };
+      finalUrl.searchParams.set('_ts', String(Date.now()));
       try {
-        const res = await fetch(finalUrl, opts);
-        // Apps Script pode não definir status corretamente; tenta ler sempre como texto
+        const res = await fetch(finalUrl.toString(), { method: 'GET', mode: 'cors', cache: 'no-store' });
         const text = await res.text();
-        try {
-          return { ok: true, json: JSON.parse(text) };
-        } catch {
-          // Resposta não é JSON — retorna erro com preview
-          return { ok: false, error: 'Resposta não é JSON', preview: text.slice(0, 200) };
-        }
+        return JSON.parse(text);
       } catch (err) {
-        return { ok: false, error: err.message || 'Falha na requisição' };
+        throw err;
       }
+    }
+
+    async function postJSONNoCorsIssues(url, payloadObj) {
+      const bodyStr = JSON.stringify(payloadObj);
+      const finalUrl = new URL(url);
+      finalUrl.searchParams.set('_ts', String(Date.now()));
+      // Content-Type: text/plain evita preflight (OPTIONS)
+      const res = await fetch(finalUrl.toString(), {
+        method: 'POST',
+        mode: 'cors',
+        cache: 'no-store',
+        headers: { 'Content-Type': 'text/plain' },
+        body: bodyStr
+      });
+      // Apps Script pode não setar status; tentamos ler body sempre
+      const text = await res.text();
+      // Ignora parsing se não for JSON válido; não quebra o fluxo
+      try { return JSON.parse(text); } catch { return { ok: true }; }
     }
 
     function showNetNotice(msg) {
@@ -123,13 +128,13 @@
 
     // Leaderboard
     async function fetchRecords() {
-      const { ok, json, error, preview } = await safeFetchJSON(WEB_APP_URL);
-      if (!ok) {
+      try {
+        const data = await fetchJSONNoCorsIssues(WEB_APP_URL);
+        renderTop10(data);
+      } catch (err) {
         recordsListEl.textContent = 'Erro ao carregar leaderboard.';
-        showNetNotice(`Falha ao buscar records: ${error}${preview ? ' • Prévia: ' + preview : ''}`);
-        return;
+        showNetNotice('Falha ao buscar records: ' + (err?.message || err));
       }
-      renderTop10(json);
     }
 
     function renderTop10(arr) {
@@ -159,17 +164,12 @@
     }
 
     async function pushRecord(record) {
-      const { ok, json, error, preview } = await safeFetchJSON(WEB_APP_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(record),
-      });
-      if (!ok) {
-        showNetNotice(`Falha ao enviar record: ${error}${preview ? ' • Prévia: ' + preview : ''}`);
-        return;
+      try {
+        await postJSONNoCorsIssues(WEB_APP_URL, record);
+        await fetchRecords();
+      } catch (err) {
+        showNetNotice('Falha ao enviar record: ' + (err?.message || err));
       }
-      // Após enviar, busca novamente
-      await fetchRecords();
     }
 
     // Jogo
@@ -225,7 +225,6 @@
     (async function init(){
       startGame();
       await fetchRecords();
-      // Polling leve
       setInterval(fetchRecords, 10000);
     })();
   </script>
