@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>🎯 Chute Chute — Ranking Global Online</title>
+  <title>?? Chute Chute — Ranking Global Online</title>
   
   <meta name="description" content="Desafio global de adivinhação. Entre para o Top 10 mundial!" />
   <meta property="og:title" content="Chute Chute: Ranking em Tempo Real" />
@@ -75,10 +75,10 @@
           <option value="hard">Difícil (1–200)</option>
         </select>
       </div>
-      <button id="btnTheme">🌓 Tema</button>
+      <button id="btnTheme">?? Tema</button>
     </div>
 
-    <h1>🎯 Chute Chute</h1>
+    <h1>?? Chute Chute</h1>
     <p id="rangeInfo" class="muted">Escolha um número entre 1 e 100</p>
 
     <div class="card">
@@ -116,7 +116,7 @@
   <script>
     (function () {
       // IMPORTANTE: Substitua pela URL que o Render/Railway te fornecer
-      const API_URL = "https://seu-projeto-node.onrender.com/ranking";
+      const API_URL ="/api/ranking";
 
       const DIFFICULTIES = { easy: 50, medium: 100, hard: 200 };
       let difficulty = 'medium';
@@ -197,14 +197,14 @@
 
         tentativas++;
         if (p === numeroSecreto) {
-          el.msg.innerHTML = `🏆 ACERTOU EM ${tentativas} TENTATIVAS!`;
+          el.msg.innerHTML = `?? ACERTOU EM ${tentativas} TENTATIVAS!`;
           el.areaGame.classList.add('hidden');
           el.areaAgain.classList.remove('hidden');
           
           // SALVAMENTO AUTOMÁTICO NO NODE.JS
           saveRecord(el.name.value, tentativas, difficulty);
         } else {
-          el.msg.textContent = p < numeroSecreto ? "🔼 Mais alto!" : "🔽 Mais baixo!";
+          el.msg.textContent = p < numeroSecreto ? "?? Mais alto!" : "?? Mais baixo!";
           el.palpite.select();
         }
       };
