@@ -3,87 +3,176 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>🔢 ChuteChute com Leaderboard Global</title>
+  <title>🔢 ChuteChute — Leaderboard Global</title>
+  <meta name="description" content="Jogo de adivinhar número com leaderboard global via Google Apps Script." />
   <style>
-    body{font-family:system-ui;padding:20px;max-width:900px;margin:0 auto}
-    .card{border:1px solid #ddd;padding:12px;border-radius:8px;margin-bottom:12px}
-    .muted{color:#666;font-size:.9rem}
-    .record{display:flex;justify-content:space-between;padding:8px;border-bottom:1px solid #eee}
+    :root{--bg:#ffffff;--fg:#222;--accent:#0B3B60;--muted:#666;--card:#f7f7f7;--border:#e6eef5}
+    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--fg);padding:20px}
+    .wrap{max-width:920px;margin:0 auto}
+    h1{margin:0 0 12px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    label{font-size:.95rem}
+    input,select{padding:8px;border-radius:8px;border:1px solid #d0d7e2;background:#fff;color:var(--fg)}
+    input[type="number"]{width:160px}
+    input[type="text"]{width:180px}
+    button{padding:8px 12px;border-radius:8px;border:0;background:var(--accent);color:#fff;cursor:pointer}
+    button.secondary{background:#5f6b7a}
+    .muted{color:var(--muted);font-size:.92rem}
+    .notice{background:#fff3cd;border:1px solid #ffe69c;color:#8a6d3b;padding:8px;border-radius:8px;margin-top:8px}
+    #recordsList{display:grid;gap:8px;margin-top:8px}
+    .record{display:flex;justify-content:space-between;padding:8px;border-radius:8px;border:1px solid #e0e0e0;background:#fff}
+    .hidden{display:none!important}
+    @media (max-width:560px){ .record{flex-direction:column;gap:4px} input[type="text"],input[type="number"]{width:130px} }
   </style>
 </head>
 <body>
-  <h1>🔢 ChuteChute com Leaderboard Global</h1>
+  <div class="wrap">
+    <h1>🔢 ChuteChute — Leaderboard Global</h1>
 
-  <div class="card">
-    <label>Nome <input id="playerName" type="text" /></label>
-    <label>Dificuldade
-      <select id="difficulty">
-        <option value="easy">Fácil (1–50)</option>
-        <option value="medium" selected>Médio (1–100)</option>
-        <option value="hard">Difícil (1–200)</option>
-      </select>
-    </label>
-    <div>
-      <input id="guess" type="number" placeholder="Seu palpite" />
-      <button id="btnGuess">Verificar</button>
-      <button id="btnRestart" class="hidden">Jogar Novamente</button>
+    <div class="card">
+      <div class="row">
+        <label>Nome <input id="playerName" type="text" placeholder="Seu nome (opcional)" /></label>
+        <label>Dificuldade
+          <select id="difficulty">
+            <option value="easy">Fácil (1–50)</option>
+            <option value="medium" selected>Médio (1–100)</option>
+            <option value="hard">Difícil (1–200)</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <input id="guess" type="number" placeholder="Seu palpite" />
+        <button id="btnGuess">Verificar</button>
+        <button id="btnRestart" class="secondary hidden">Jogar Novamente</button>
+      </div>
+
+      <div id="message" class="muted" style="margin-top:10px"></div>
+
+      <div id="netNotice" class="notice hidden"></div>
     </div>
-    <div id="message" class="muted"></div>
-  </div>
 
-  <div class="card">
-    <h3>🏅 Top 10 Global</h3>
-    <div id="recordsList" class="muted">Carregando...</div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <strong>🏅 Top 10 Global</strong>
+          <div class="muted">Ordenado por menos tentativas (desempate pela data mais recente).</div>
+        </div>
+        <button id="btnRefresh" class="secondary">Atualizar</button>
+      </div>
+
+      <div id="recordsList" class="muted">Carregando...</div>
+    </div>
   </div>
 
   <script>
+    // URL do seu Apps Script publicado como Web App
     const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwbtOhk4-2QISmZ2L7_b0q5jBAAaDXO8AsZTows7VeQeIzjnUxlu2RGbAE6-Uo3GRnh/exec';
-    const DIFFICULTIES = { easy:50, medium:100, hard:200 };
-    let difficulty = 'medium', max = DIFFICULTIES[difficulty], secret = Math.floor(Math.random()*max)+1, attempts = 0, finished = false;
 
+    // Jogo
+    const DIFFICULTIES = { easy:50, medium:100, hard:200 };
+    let difficulty = 'medium';
+    let max = DIFFICULTIES[difficulty];
+    let secret = Math.floor(Math.random()*max)+1;
+    let attempts = 0;
+    let finished = false;
+
+    // DOM
     const playerNameEl = document.getElementById('playerName');
     const difficultyEl = document.getElementById('difficulty');
     const guessEl = document.getElementById('guess');
     const btnGuess = document.getElementById('btnGuess');
     const btnRestart = document.getElementById('btnRestart');
+    const btnRefresh = document.getElementById('btnRefresh');
     const messageEl = document.getElementById('message');
-    const recordsList = document.getElementById('recordsList');
+    const netNoticeEl = document.getElementById('netNotice');
+    const recordsListEl = document.getElementById('recordsList');
 
-    async function fetchRecords() {
+    // Helpers de rede resilientes
+    async function safeFetchJSON(url, options = {}) {
+      const finalUrl = new URL(url);
+      finalUrl.searchParams.set('_ts', String(Date.now())); // evita cache agressivo
+      const opts = {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-store',
+        mode: 'cors',
+        ...options
+      };
       try {
-        const res = await fetch(WEB_APP_URL);
-        const data = await res.json();
-        renderTop10(data);
+        const res = await fetch(finalUrl, opts);
+        // Apps Script pode não definir status corretamente; tenta ler sempre como texto
+        const text = await res.text();
+        try {
+          return { ok: true, json: JSON.parse(text) };
+        } catch {
+          // Resposta não é JSON — retorna erro com preview
+          return { ok: false, error: 'Resposta não é JSON', preview: text.slice(0, 200) };
+        }
       } catch (err) {
-        recordsList.textContent = 'Erro ao carregar leaderboard.';
+        return { ok: false, error: err.message || 'Falha na requisição' };
       }
     }
 
+    function showNetNotice(msg) {
+      netNoticeEl.textContent = msg;
+      netNoticeEl.classList.remove('hidden');
+      setTimeout(() => netNoticeEl.classList.add('hidden'), 5000);
+    }
+
+    // Leaderboard
+    async function fetchRecords() {
+      const { ok, json, error, preview } = await safeFetchJSON(WEB_APP_URL);
+      if (!ok) {
+        recordsListEl.textContent = 'Erro ao carregar leaderboard.';
+        showNetNotice(`Falha ao buscar records: ${error}${preview ? ' • Prévia: ' + preview : ''}`);
+        return;
+      }
+      renderTop10(json);
+    }
+
     function renderTop10(arr) {
-      if (!Array.isArray(arr) || arr.length === 0) { recordsList.textContent = 'Nenhum recorde.'; return; }
-      const sorted = arr.slice().sort((a,b)=> a.tries - b.tries || new Date(b.date) - new Date(a.date)).slice(0,10);
-      recordsList.innerHTML = '';
+      if (!Array.isArray(arr) || arr.length === 0) {
+        recordsListEl.textContent = 'Nenhum recorde.';
+        return;
+      }
+      const sorted = arr
+        .slice()
+        .sort((a,b)=> {
+          if (a.tries !== b.tries) return a.tries - b.tries;
+          return new Date(b.date) - new Date(a.date);
+        })
+        .slice(0,10);
+      recordsListEl.innerHTML = '';
       sorted.forEach((r,i)=>{
         const div = document.createElement('div');
         div.className = 'record';
-        div.innerHTML = `<div><strong>#${i+1}</strong> ${r.name||'—'} <span class="muted">(${r.difficulty})</span></div><div class="muted">${r.tries} • ${new Date(r.date).toLocaleString()}</div>`;
-        recordsList.appendChild(div);
+        const nameSafe = (r.name && String(r.name)) || '—';
+        const diffLabel = (r.difficulty || '').toString().toUpperCase();
+        const dateLabel = r.date ? new Date(r.date).toLocaleString() : '';
+        div.innerHTML =
+          `<div><strong>#${i+1}</strong> ${nameSafe} <span class="muted">(${diffLabel})</span></div>` +
+          `<div class="muted">${r.tries} tentativa(s) • ${dateLabel}</div>`;
+        recordsListEl.appendChild(div);
       });
     }
 
     async function pushRecord(record) {
-      try {
-        await fetch(WEB_APP_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(record)
-        });
-        fetchRecords();
-      } catch (err) {
-        console.warn('Erro ao enviar record', err);
+      const { ok, json, error, preview } = await safeFetchJSON(WEB_APP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(record),
+      });
+      if (!ok) {
+        showNetNotice(`Falha ao enviar record: ${error}${preview ? ' • Prévia: ' + preview : ''}`);
+        return;
       }
+      // Após enviar, busca novamente
+      await fetchRecords();
     }
 
+    // Jogo
     function startGame() {
       difficulty = difficultyEl.value;
       max = DIFFICULTIES[difficulty];
@@ -93,33 +182,52 @@
       messageEl.textContent = `Escolha um número entre 1 e ${max}`;
       guessEl.value = '';
       btnRestart.classList.add('hidden');
+      guessEl.min = 1;
+      guessEl.max = max;
       guessEl.focus(); guessEl.select();
     }
 
-    btnGuess.addEventListener('click', async () => {
+    async function handleGuess() {
       if (finished) return;
       const val = parseInt(guessEl.value, 10);
-      if (!Number.isFinite(val) || val < 1 || val > max) { messageEl.textContent = `Insira 1–${max}`; return; }
+      if (!Number.isFinite(val) || val < 1 || val > max) {
+        messageEl.textContent = `Insira um número entre 1 e ${max}.`;
+        guessEl.focus(); guessEl.select();
+        return;
+      }
       attempts++;
       if (val === secret) {
         messageEl.textContent = `🎉 Acertou em ${attempts} tentativa(s)! Enviando...`;
         finished = true;
-        const rec = { name: (playerNameEl.value||'').trim() || null, tries: attempts, difficulty, max, date: new Date().toISOString() };
+        const rec = {
+          name: (playerNameEl.value || '').trim() || null,
+          tries: attempts,
+          difficulty,
+          max,
+          date: new Date().toISOString()
+        };
         await pushRecord(rec);
         btnRestart.classList.remove('hidden');
       } else {
         messageEl.textContent = val < secret ? '🔼 Muito baixo!' : '🔽 Muito alto!';
       }
       guessEl.focus(); guessEl.select();
-    });
+    }
 
+    // Eventos
+    btnGuess.addEventListener('click', handleGuess);
     btnRestart.addEventListener('click', startGame);
     difficultyEl.addEventListener('change', startGame);
+    guessEl.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') handleGuess(); });
+    btnRefresh.addEventListener('click', fetchRecords);
 
-    // inicial
-    startGame();
-    fetchRecords();
-    setInterval(fetchRecords, 8000);
+    // Inicialização
+    (async function init(){
+      startGame();
+      await fetchRecords();
+      // Polling leve
+      setInterval(fetchRecords, 10000);
+    })();
   </script>
 </body>
 </html>
